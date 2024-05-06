@@ -11,6 +11,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddTransient<IInvoiceRepositoryService, InvoiceRepositoryService>();
         services.AddTransient<IInvoiceReportService, InvoiceReportService>();
         services.AddTransient<IInvoiceReportRepositoryService, InvoiceReportRepositoryService>();
+        services.AddTransient<ILoggingService, LoggingService>();
+        services.AddTransient<ILoggingRepositoryService, LoggingRepositoryService>();
         services.AddHostedService<Worker>();
         
     })

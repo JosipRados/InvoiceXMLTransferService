@@ -18,14 +18,17 @@ namespace InvoiceXMLTransferService.Services.Implementation
     {
         private readonly IInvoiceRepositoryService _invoiceRepositoryService;
         private readonly IConfiguration _configuration;
+        private readonly ILoggingRepositoryService _logger;
         private string? SFTPServer;
         private string? SFTPUsername;
         private string? SFTPPassword;
 
-        public InvoiceService(IInvoiceRepositoryService invoiceRepositoryService, IConfiguration configuration)
+        public InvoiceService(IInvoiceRepositoryService invoiceRepositoryService, IConfiguration configuration
+                              ILoggingRepositoryService loggerRepositoryService)
         {
             _invoiceRepositoryService = invoiceRepositoryService;
             _configuration = configuration;
+            _logger = loggerRepositoryService;
             SFTPServer = _configuration["SFTPConnection:MainServer:ServerIP"];
             SFTPUsername = _configuration["SFTPConnection:MainServer:Username"];
             SFTPPassword = _configuration["SFTPConnection:MainServer:Password"];
@@ -147,7 +150,7 @@ namespace InvoiceXMLTransferService.Services.Implementation
                     XmlSerializer serializer = new XmlSerializer(typeof(InvoiceStatusResponseModel));
                     serializer.Serialize(ms, statusResponse);
                     ms.Position = 0;
-                    client.UploadFile(ms, @"\Invoice_Transfer\InvoiceProcessingResponse\" + fileName + "_Response.xml");
+                    client.UploadFile(ms, @"\Invoice_Transfer\InvoiceProcessingResponse\Response_" + fileName);
                     
                     client.Disconnect();
                 }
