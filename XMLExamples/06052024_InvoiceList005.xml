@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<InvoiceList>
+	<Date>2024-05-06</Date>
+	<Invoices>
+		<Invoice>
+			<InvoiceNumber>05052024009</InvoiceNumber>
+			<InvoiceDate>2024-05-06T11:03:27</InvoiceDate>
+			<ItemsNumber>2</ItemsNumber>
+			<ItemList>
+				<Item>
+					<ItemNumber>5005</ItemNumber>
+					<Price>14.99</Price>
+					<Description>Something</Description>
+					<InvoiceNumber>05052024009</InvoiceNumber>
+				</Item>
+				<Item>
+					<ItemNumber>5003</ItemNumber>
+					<Price>24.99</Price>
+					<Description>Something Else</Description>
+					<InvoiceNumber>05052024009</InvoiceNumber>
+				</Item>
+			</ItemList>
+			<TotalAmount>39.98</TotalAmount>
+		</Invoice>
+		<Invoice>
+			<InvoiceNumber>05052024010</InvoiceNumber>
+			<InvoiceDate>2024-05-06T14:22:17</InvoiceDate>
+			<ItemsNumber>2</ItemsNumber>
+			<ItemList>
+				<Item>
+					<ItemNumber>5001</ItemNumber>
+					<Price>4.99</Price>
+					<Description>Other Something</Description>
+					<InvoiceNumber>05052024010</InvoiceNumber>
+				</Item>
+				<Item>
+					<ItemNumber>5002</ItemNumber>
+					<Price>11.49</Price>
+					<Description>Second Other Something</Description>
+					<InvoiceNumber>05052024010</InvoiceNumber>
+				</Item>
+			</ItemList>
+			<TotalAmount>16.48</TotalAmount>
+		</Invoice>
+	</Invoices>
+</InvoiceList>
