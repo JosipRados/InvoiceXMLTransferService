@@ -14,14 +14,17 @@ namespace InvoiceXMLTransferService.Services.Implementation
     {
         private readonly IInvoiceReportRepositoryService _invoiceReportRepositoryService;
         private readonly IConfiguration _configuration;
+        private readonly ILoggingRepositoryService _logger;
         private string? SFTPServer;
         private string? SFTPUsername;
         private string? SFTPPassword;
 
-        public InvoiceReportService(IInvoiceReportRepositoryService invoiceReportRepositoryService, IConfiguration configuration)
+        public InvoiceReportService(IInvoiceReportRepositoryService invoiceReportRepositoryService, IConfiguration configuration,
+                                    ILoggingRepositoryService loggingRepositoryService)
         {
             _invoiceReportRepositoryService = invoiceReportRepositoryService;
             _configuration = configuration;
+            _logger = loggingRepositoryService;
             SFTPServer = _configuration["SFTPConnection:MainServer:ServerIP"];
             SFTPUsername = _configuration["SFTPConnection:MainServer:Username"];
             SFTPPassword = _configuration["SFTPConnection:MainServer:Password"];
@@ -29,9 +32,6 @@ namespace InvoiceXMLTransferService.Services.Implementation
 
         public void FetchDailyInvoiceReport(DateTime today)
         {
-            //Idem u bazu i skupljam sve račune današnjeg dana
-            //vraćam ih u metodu i kreiram xml od njih
-            //spremam xml na server
             try
             {
                 var report = _invoiceReportRepositoryService.DailyInvoiceReport(DateTime.Now);
@@ -41,7 +41,12 @@ namespace InvoiceXMLTransferService.Services.Implementation
             }
             catch (Exception ex)
             {
-                //log
+                _logger.WriteLog(new LoggingModel()
+                {
+                    IsError = true,
+                    Description = ex.Message,
+                    Modul = "InvoiceXMLTransferService"
+                });
             }
             
 
@@ -51,6 +56,9 @@ namespace InvoiceXMLTransferService.Services.Implementation
         {
             try
             {
+                if (SFTPServer == null || SFTPUsername == null || SFTPPassword == null)
+                    throw new Exception("Not valid connection data.");
+
                 using (SftpClient client = new SftpClient(new PasswordConnectionInfo(SFTPServer, SFTPUsername, SFTPPassword)))
                 {
                     client.Connect();

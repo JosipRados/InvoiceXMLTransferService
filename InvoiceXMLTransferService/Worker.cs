@@ -1,16 +1,22 @@
+using DataAccess.Models;
+using DataAccess.RepositoryServices;
 using InvoiceXMLTransferService.Services;
 
 namespace InvoiceXMLTransferService
 {
     public class Worker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILoggingRepositoryService _logger;
         private readonly IInvoiceService _invoiceService;
         private readonly IInvoiceReportService _invoiceReportService;
+        private DateTime _currentDateTime;
+        private TimeSpan _low = new TimeSpan(23, 0, 0); 
+        private TimeSpan _high = new TimeSpan(23, 59, 59); 
 
-        public Worker(ILogger<Worker> logger, IInvoiceService invoiceService, IInvoiceReportService invoiceReportService)
+        public Worker(IInvoiceService invoiceService, IInvoiceReportService invoiceReportService,
+                      ILoggingRepositoryService loggingRepositoryService)
         {
-            _logger = logger;
+            _logger = loggingRepositoryService;
             _invoiceService = invoiceService;
             _invoiceReportService = invoiceReportService;
         }
@@ -19,10 +25,27 @@ namespace InvoiceXMLTransferService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                //_logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                //await Task.Delay(1000, stoppingToken);
-                //_invoiceService.InvoiceTransfer();
-                invoiceReportService.FetchDailyInvoiceReport(DateTime.Now);
+                _logger.WriteLog(new LoggingModel()
+                {
+                    IsError = false,
+                    Description = "Worker started",
+                    Modul = "InvoiceXMLTransferService"
+                });
+                _currentDateTime = DateTime.Now;
+
+                _invoiceService.InvoiceTransfer();
+
+                if(_currentDateTime.TimeOfDay > _low && _currentDateTime.TimeOfDay < _high)
+                    _invoiceReportService.FetchDailyInvoiceReport(DateTime.Now);
+
+                _logger.WriteLog(new LoggingModel()
+                {
+                    IsError = false,
+                    Description = "Worker done",
+                    Modul = "InvoiceXMLTransferService"
+                });
+
+                await Task.Delay(TimeSpan.FromMinutes(60));
             }
         }
     }

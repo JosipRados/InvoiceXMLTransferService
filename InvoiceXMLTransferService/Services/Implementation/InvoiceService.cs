@@ -23,7 +23,7 @@ namespace InvoiceXMLTransferService.Services.Implementation
         private string? SFTPUsername;
         private string? SFTPPassword;
 
-        public InvoiceService(IInvoiceRepositoryService invoiceRepositoryService, IConfiguration configuration
+        public InvoiceService(IInvoiceRepositoryService invoiceRepositoryService, IConfiguration configuration,
                               ILoggingRepositoryService loggerRepositoryService)
         {
             _invoiceRepositoryService = invoiceRepositoryService;
@@ -41,7 +41,12 @@ namespace InvoiceXMLTransferService.Services.Implementation
                 List<InvoiceXMLFilesModel>? xmlFiles = FetchDocument();
                 if(xmlFiles == null)
                 {
-                    //log
+                    _logger.WriteLog(new LoggingModel()
+                    {
+                        IsError = false,
+                        Description = "There is no invoice files available on server.",
+                        Modul = "InvoiceXMLTransferService"
+                    });
                     return;
                 }
                 foreach(var file in xmlFiles)
@@ -58,7 +63,12 @@ namespace InvoiceXMLTransferService.Services.Implementation
             }
             catch(Exception ex)
             {
-                //log
+                _logger.WriteLog(new LoggingModel()
+                {
+                    IsError = true,
+                    Description = ex.Message,
+                    Modul = "InvoiceXMLTransferService"
+                });
             }
         }
 
@@ -76,8 +86,9 @@ namespace InvoiceXMLTransferService.Services.Implementation
 
                     var fileNames = client.ListDirectory(@"\Invoice_Transfer\Invoice")
                                       .Where(x=>x.Name != "." && x.Name != "..")
-                                      .Select(x => x.Name);
-                    if (fileNames.Count() < 0 || fileNames == null)
+                                      .Select(x => x.Name).ToList();
+
+                    if (fileNames.Count() <= 0 || fileNames == null)
                         return null;
 
                     foreach(var fileName in fileNames)
@@ -95,16 +106,6 @@ namespace InvoiceXMLTransferService.Services.Implementation
                             xmlFiles.Add(file);
                         }
                     }
-
-                    //MemoryStream ms = new MemoryStream();
-                    //client.DownloadFile(@"\Invoice_Transfer\Invoice\05052024_InvoiceList001.xml", ms);
-                    //ms.Position = 0;
-
-                    //using (XmlReader reader = XmlReader.Create(ms))
-                    //{
-                    //    xmlFiles.Load(reader);
-                    //}
-                   
                     client.Disconnect();
                 }
 
@@ -143,6 +144,9 @@ namespace InvoiceXMLTransferService.Services.Implementation
             };
             try
             {
+                if (SFTPServer == null || SFTPUsername == null || SFTPPassword == null)
+                    throw new Exception("Not valid connection data.");
+
                 using (SftpClient client = new SftpClient(new PasswordConnectionInfo(SFTPServer, SFTPUsername, SFTPPassword)))
                 {
                     client.Connect();
@@ -151,7 +155,6 @@ namespace InvoiceXMLTransferService.Services.Implementation
                     serializer.Serialize(ms, statusResponse);
                     ms.Position = 0;
                     client.UploadFile(ms, @"\Invoice_Transfer\InvoiceProcessingResponse\Response_" + fileName);
-                    
                     client.Disconnect();
                 }
             }
@@ -163,12 +166,22 @@ namespace InvoiceXMLTransferService.Services.Implementation
 
         internal void MoveInvoiceToArchive(string fileName)
         {
-            using (SftpClient client = new SftpClient(new PasswordConnectionInfo(SFTPServer, SFTPUsername, SFTPPassword)))
+            try
             {
-                client.Connect();
-                var file = client.Get(@"\Invoice_Transfer\Invoice\" + fileName);
-                file.MoveTo(@"\Invoice_Transfer\InvoiceArchive\" + fileName);
-                client.Disconnect();
+                if (SFTPServer == null || SFTPUsername == null || SFTPPassword == null)
+                    throw new Exception("Not valid connection data.");
+
+                using (SftpClient client = new SftpClient(new PasswordConnectionInfo(SFTPServer, SFTPUsername, SFTPPassword)))
+                {
+                    client.Connect();
+                    var file = client.Get(@"\Invoice_Transfer\Invoice\" + fileName);
+                    file.MoveTo(@"\Invoice_Transfer\InvoiceArchive\" + fileName);
+                    client.Disconnect();
+                }
+            }
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
         }
     }
